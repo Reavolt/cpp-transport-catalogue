@@ -1,7 +1,5 @@
 #include "input_reader.h"
 
-#include "detail.h"
-
 #include <algorithm>
 #include <iterator>
 #include <sstream>
@@ -13,73 +11,53 @@ namespace input
     using namespace transport_catalogue;
     using namespace detail;
 
-    input_reader::input_reader(TransportCatalogue* catalogue) : stop_queries_(), bus_queries_(), catalogue_(catalogue) {}
-
-    void input_reader::fill_transport_catalogue()
+    Reader::Reader(TransportCatalogue* catalogue) :
+        stop_queries_(),
+        bus_queries_(),
+        catalogue_(catalogue)
     {
-        std::vector<stop> stops_data;
+    }
+
+    void Reader::FillCatalogue()
+    {
+        std::vector<Stop> stops_data;
         stops_data.reserve(stop_queries_.size());
 
         for(auto& stop_data : stop_queries_)
         {
-            auto stop = parse_stop(stop_data.request_);
-            catalogue_->add_stop(stop);
-            stops_data.push_back(stop);
+            auto Stop = ParseStop(stop_data.request_);
+            catalogue_->AddStop(Stop);
+            stops_data.push_back(Stop);
         }
 
         for(auto& stop_from : stops_data)
         {
-            std::vector<std::pair<stop*, int>> distance_to_stop_ = parse_stops_distance(stop_queries_.front().request_);
+            std::vector<std::pair<Stop*, int>> distance_to_stop_ =
+              ParseStopsDistance(stop_queries_.front().request_);
 
             for(auto [stop_to, distance] : distance_to_stop_)
             {
-                catalogue_->set_distance_between_stops(stop_from.name_, stop_to->name_, distance);
+                catalogue_->SetDistanceBetweenStops(stop_from.name_, stop_to->name_, distance);
             }
             stop_queries_.pop_front();
         }
 
         for(auto& bus_data : bus_queries_)
         {
-            bus data = parse_bus(bus_data.request_);
-            catalogue_->add_bus(data);
+            Bus data = ParseBus(bus_data.request_);
+            catalogue_->AddBus(data);
         }
         bus_queries_.clear();
     }
 
-    std::istream& operator>>(std::istream& stream, input_reader& i_reader)
-    {
-        size_t request_count = 0;
-        stream >> request_count;
-        stream.ignore();
-
-        for(size_t i = 0; i < request_count; ++i)
-        {
-            std::string request;
-            std::getline(stream, request);
-
-            std::string request_type(i_reader.parse_request_type(request));
-
-            if(request_type == "Stop"s)
-            {
-                i_reader.stop_queries_.emplace_back(input_reader::query_type::STOP, request);
-            }
-
-            if(request_type == "Bus"s)
-            {
-                i_reader.bus_queries_.emplace_back(input_reader::query_type::BUS, request);
-            }
-        }
-        return stream;
-    }
-
-    std::string input_reader::parse_request_type(std::string& request)
+    std::string Reader::ParseRequestType(std::string& request)
     {
         std::string request_type = request.substr(0, request.find_first_of(' '));
         trim(request.erase(0, request.find_first_of(' ')));
         return request_type;
     }
 
-    std::string input_reader::parse_name(std::string& request)
+    std::string Reader::ParseName(std::string& request)
     {
         size_t      name_delimeter = request.find_first_of(':');
         std::string name           = trim_copy(request.substr(0, name_delimeter));
@@ -87,7 +65,7 @@ namespace input
         return name;
     }
 
-    Coordinates input_reader::parse_coords(std::string& request)
+    Coordinates Reader::ParseCoords(std::string& request)
     {
         size_t coord_delimeter = request.find_first_of(',');
         double latitude        = std::stod(request.substr(0, coord_delimeter));
@@ -107,73 +85,77 @@ namespace input
         return {latitude, longitude};
     }
 
-    std::vector<std::pair<stop*, int>> input_reader::parse_stops_distance(std::string& request)
+    std::vector<std::pair<Stop*, int>> Reader::ParseStopsDistance(std::string& request)
     {
         std::stringstream                  str_stream(request);
-        std::vector<std::pair<stop*, int>> stops_distances;
+        std::vector<std::pair<Stop*, int>> stops_distances;
 
-        stops_distances.reserve(std::count_if(request.begin(), request.end(), [&](char c) { return c == ','; }) + 1);
+        stops_distances.reserve(
+          std::count_if(request.begin(), request.end(), [&](char c) { return c == ','; }) + 1);
 
         std::string stop_distances;
         while(std::getline(str_stream, stop_distances, ','))
         {
             int distance = std::stoi(stop_distances.substr(0, stop_distances.find_first_of('m')));
             stop_distances.erase(0, stop_distances.find_first_of("to"));
-            std::string name = trim_copy(stop_distances.substr(stop_distances.find_first_not_of("to"), std::string::npos));
+            std::string name = trim_copy(
+              stop_distances.substr(stop_distances.find_first_not_of("to"), std::string::npos));
 
-            stops_distances.emplace_back(catalogue_->find_stop(name), distance);
+            stops_distances.emplace_back(catalogue_->FindStop(name), distance);
         }
         return stops_distances;
     }
 
-    std::vector<const stop*> input_reader::parse_standart_route(std::string& request)
+    std::vector<const Stop*> Reader::ParseStandartRoute(std::string& request)
     {
         std::stringstream        str_stream(request);
-        std::vector<const stop*> standart_route;
+        std::vector<const Stop*> standart_route;
 
-        standart_route.reserve(std::count_if(request.begin(), request.end(), [&](char c) { return c == '>'; }) + 1);
+        standart_route.reserve(
+          std::count_if(request.begin(), request.end(), [&](char c) { return c == '>'; }) + 1);
 
-        std::string stop;
-        while(std::getline(str_stream, stop, '>'))
+        std::string Stop;
+        while(std::getline(str_stream, Stop, '>'))
         {
-            standart_route.push_back(catalogue_->find_stop(trim(stop)));
+            standart_route.push_back(catalogue_->FindStop(trim(Stop)));
         }
         return standart_route;
     }
 
-    std::vector<const stop*> input_reader::parse_ring_route(std::string& request)
+    std::vector<const Stop*> Reader::ParseRingRoute(std::string& request)
     {
         std::stringstream        str_stream(request);
-        std::vector<const stop*> ring_route;
+        std::vector<const Stop*> ring_route;
 
-        ring_route.reserve(std::count_if(request.begin(), request.end(), [&](char c) { return c == '-'; }) * 2);
+        ring_route.reserve(
+          std::count_if(request.begin(), request.end(), [&](char c) { return c == '-'; }) * 2);
 
-        std::string stop;
-        while(std::getline(str_stream, stop, '-'))
+        std::string Stop;
+        while(std::getline(str_stream, Stop, '-'))
         {
-            ring_route.push_back(catalogue_->find_stop(trim(stop)));
+            ring_route.push_back(catalogue_->FindStop(trim(Stop)));
         }
         std::copy(ring_route.rbegin() + 1, ring_route.rend(), std::back_inserter(ring_route));
         return ring_route;
     }
 
-    stop input_reader::parse_stop(std::string& request)
+    Stop Reader::ParseStop(std::string& request)
     {
-        return {parse_name(request), parse_coords(request)};
+        return {ParseName(request), ParseCoords(request)};
     }
 
-    bus input_reader::parse_bus(std::string& request)
+    Bus Reader::ParseBus(std::string& request)
     {
-        std::string name(parse_name(request));
+        std::string name(ParseName(request));
 
-        std::vector<const stop*> route;
+        std::vector<const Stop*> route;
         if(request.find('>') != std::string::npos)
         {
-            route = parse_standart_route(request);
+            route = ParseStandartRoute(request);
         }
         else
         {
-            route = parse_ring_route(request);
+            route = ParseRingRoute(request);
         }
         return {name, route};
     }

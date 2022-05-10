@@ -4,5 +4,5 @@
 
 void all_input_tests()
 {
-    parse_name();
+    ParseName();
 }

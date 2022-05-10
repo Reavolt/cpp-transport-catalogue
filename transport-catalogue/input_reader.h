@@ -11,44 +11,77 @@ namespace input
 {
     using namespace std::literals;
 
-    class input_reader
+    class Reader
     {
-    private:
-        enum class query_type
+    public:    //types
+        using StopsDistance = std::vector<std::pair<transport_catalogue::Stop*, int>>;
+        using StopsData     = std::vector<const transport_catalogue::Stop*>;
+
+    private:    //types
+        enum class QueryType
         {
             STOP,
             BUS,
         };
 
-        struct query
+        struct Query
         {
-            query_type  type_;
+            QueryType   type_;
             std::string request_{};
 
-            query(query_type type, const std::string& request) : type_(type), request_(request) {}
+            Query(QueryType type, const std::string& request) : type_(type), request_(request) {}
         };
 
-        std::deque<query> stop_queries_{};
-        std::deque<query> bus_queries_{};
+        std::deque<Query> stop_queries_{};
+        std::deque<Query> bus_queries_{};
 
         transport_catalogue::TransportCatalogue* catalogue_ = nullptr;
 
-    public:
-        explicit input_reader(transport_catalogue::TransportCatalogue* catalogue);
+    private:    //methods
+        void FillCatalogue();
 
-        void fill_transport_catalogue();
+    public:    //methods
+        explicit Reader(transport_catalogue::TransportCatalogue* catalogue);
 
-        [[nodiscard]] std::string                                             parse_request_type(std::string& request);
-        [[nodiscard]] std::string                                             parse_name(std::string& request);
-        [[nodiscard]] Coordinates                                             parse_coords(std::string& request);
-        [[nodiscard]] std::vector<std::pair<transport_catalogue::stop*, int>> parse_stops_distance(std::string& request);
+        [[nodiscard]] std::string   ParseRequestType(std::string& request);
+        [[nodiscard]] std::string   ParseName(std::string& request);
+        [[nodiscard]] Coordinates   ParseCoords(std::string& request);
+        [[nodiscard]] StopsDistance ParseStopsDistance(std::string& request);
 
-        [[nodiscard]] std::vector<const transport_catalogue::stop*> parse_standart_route(std::string& request);
-        [[nodiscard]] std::vector<const transport_catalogue::stop*> parse_ring_route(std::string& request);
+        [[nodiscard]] StopsData ParseStandartRoute(std::string& request);
+        [[nodiscard]] StopsData ParseRingRoute(std::string& request);
 
-        transport_catalogue::stop parse_stop(std::string& request);
-        transport_catalogue::bus  parse_bus(std::string& request);
+        [[nodiscard]] transport_catalogue::Stop ParseStop(std::string& request);
+        [[nodiscard]] transport_catalogue::Bus  ParseBus(std::string& request);
 
-        friend std::istream& operator>>(std::istream& stream, input_reader& i_reader);
+        template<typename Stream>
+        void ReadFromStream(Stream& stream);
     };
+
+    template<typename Stream>
+    void Reader::ReadFromStream(Stream& stream)
+    {
+        size_t request_count = 0;
+        stream >> request_count;
+        stream.ignore();
+
+        for(size_t i = 0; i < request_count; ++i)
+        {
+            std::string request;
+            std::getline(stream, request);
+
+            std::string request_type(ParseRequestType(request));
+
+            if(request_type == "Stop"s)
+            {
+                stop_queries_.emplace_back(Reader::QueryType::STOP, request);
+            }
+
+            if(request_type == "Bus"s)
+            {
+                bus_queries_.emplace_back(Reader::QueryType::BUS, request);
+            }
+        }
+        FillCatalogue();
+    }
 }    // namespace input
