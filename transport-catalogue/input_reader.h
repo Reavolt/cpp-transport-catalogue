@@ -14,8 +14,8 @@ namespace input
     class Reader
     {
     public:    //types
-        using StopsDistance = std::vector<std::pair<transport_catalogue::Stop*, int>>;
-        using StopsData     = std::vector<const transport_catalogue::Stop*>;
+        using StopsDistance = std::vector<std::pair<domain::Stop*, int>>;
+        using StopsData     = std::vector<const domain::Stop*>;
 
     private:    //types
         enum class QueryType
@@ -43,16 +43,16 @@ namespace input
     public:    //methods
         explicit Reader(transport_catalogue::TransportCatalogue* catalogue);
 
-        [[nodiscard]] std::string   ParseRequestType(std::string& request);
-        [[nodiscard]] std::string   ParseName(std::string& request);
-        [[nodiscard]] Coordinates   ParseCoords(std::string& request);
-        [[nodiscard]] StopsDistance ParseStopsDistance(std::string& request);
+        [[nodiscard]] std::string      ParseRequestType(std::string& request);
+        [[nodiscard]] std::string      ParseName(std::string& request);
+        [[nodiscard]] geo::Coordinates ParseCoords(std::string& request);
+        [[nodiscard]] StopsDistance    ParseStopsDistance(std::string& request);
 
         [[nodiscard]] StopsData ParseStandartRoute(std::string& request);
         [[nodiscard]] StopsData ParseRingRoute(std::string& request);
 
-        [[nodiscard]] transport_catalogue::Stop ParseStop(std::string& request);
-        [[nodiscard]] transport_catalogue::Bus  ParseBus(std::string& request);
+        [[nodiscard]] domain::Stop ParseStop(std::string& request);
+        [[nodiscard]] domain::Bus  ParseBus(std::string& request);
 
         template<typename Stream>
         void ReadFromStream(Stream& stream);

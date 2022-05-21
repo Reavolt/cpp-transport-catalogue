@@ -1,29 +1,27 @@
 #pragma once
 
 #include <cmath>
+#include <cstdint>
 
-struct Coordinates
+namespace geo
 {
-    double lat;
-    double lng;
-    bool   operator==(const Coordinates& other) const
-    {
-        return lat == other.lat && lng == other.lng;
-    }
-    bool operator!=(const Coordinates& other) const
-    {
-        return !(*this == other);
-    }
-};
+    const static uint32_t EarthRadius = 6371000;
 
-inline double ComputeDistance(Coordinates from, Coordinates to)
-{
-    using namespace std;
-    if(from == to)
+    struct Coordinates
     {
-        return 0;
-    }
-    static const double dr = 3.1415926535 / 180.;
-    return acos(sin(from.lat * dr) * sin(to.lat * dr) + cos(from.lat * dr) * cos(to.lat * dr) * cos(abs(from.lng - to.lng) * dr)) *
-           6371000;
-}
+        double lat;
+        double lng;
+
+        bool operator==(const Coordinates& other) const
+        {
+            return lat == other.lat && lng == other.lng;
+        }
+
+        bool operator!=(const Coordinates& other) const
+        {
+            return !(*this == other);
+        }
+    };
+
+    double ComputeDistance(Coordinates from, Coordinates to);
+}    // namespace geo

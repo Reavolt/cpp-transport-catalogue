@@ -4,22 +4,15 @@
 
 namespace output
 {
-    using namespace transport_catalogue;
-    using namespace detail;
+    Reader::Reader(transport_catalogue::TransportCatalogue* catalogue) : request_data_(), catalogue_(catalogue) {}
 
-    Reader::Reader(TransportCatalogue* catalogue) :
-        request_data_(),
-        catalogue_(catalogue)
-    {
-    }
-
-    std::string Reader::PrintBus(const transport_catalogue::BusInfo& bus)
+    std::string Reader::PrintBus(const domain::BusInfo& bus)
     {
         std::stringstream stream;
         if(bus.stops_count_)
         {
-            stream << "Bus " << bus.name_ << ": " << bus.stops_count_ << " stops on route, "
-                   << bus.uniq_stops_count_ << " unique stops, " << bus.bus_length_ << " route length"
+            stream << "Bus " << bus.name_ << ": " << bus.stops_count_ << " stops on route, " << bus.uniq_stops_count_
+                   << " unique stops, " << bus.bus_length_ << " route length"
                    << ", " << std::setprecision(6) << bus.curvature_ << " curvature" << std::endl;
         }
         else
@@ -30,7 +23,7 @@ namespace output
         return stream.str();
     }
 
-    std::string Reader::PrintStop(const transport_catalogue::StopInfo& stop)
+    std::string Reader::PrintStop(const domain::StopInfo& stop)
     {
         std::stringstream stream;
         if(!stop.not_found_)
@@ -63,7 +56,7 @@ namespace output
     [[nodiscard]] std::string Reader::ParseRequestType(std::string& request)
     {
         std::string request_type = request.substr(0, request.find_first_of(' '));
-        trim(request.erase(0, request.find_first_of(' ')));
+        detail::trim(request.erase(0, request.find_first_of(' ')));
         return request_type;
     }
 }    // namespace output

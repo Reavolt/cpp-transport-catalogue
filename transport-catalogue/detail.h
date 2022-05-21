@@ -1,68 +1,63 @@
 #pragma once
 
-#include "transport_catalogue.h"
+#include "domain.h"
 
 #include <string>
 #include <utility>
 
-namespace transport_catalogue
+namespace detail
 {
-    struct Stop;
+    const int SIMPLE_NUMBER = 37;
 
-    namespace detail
+    struct StopPtrHasher
     {
-        const int SIMPLE_NUMBER = 37;
-
-        struct StopPtrHasher
+        size_t operator()(const std::pair<const domain::Stop*, const domain::Stop*>& p) const
         {
-            size_t operator()(const std::pair<const Stop*, const Stop*>& p) const
-            {
-                return pointer_hasher(p.first) * SIMPLE_NUMBER +
-                       pointer_hasher(p.second) * SIMPLE_NUMBER * SIMPLE_NUMBER;
-            }
-            size_t operator()(const Stop* p) const
-            {
-                return pointer_hasher(p) * SIMPLE_NUMBER;
-            }
-
-        private:
-            std::hash<const void*> pointer_hasher{};
-        };
-
-        // trim from left
-        inline std::string& ltrim(std::string& s, const char* t = " \t\n\r\f\v")
-        {
-            s.erase(0, s.find_first_not_of(t));
-            return s;
+            return pointer_hasher(p.first) * SIMPLE_NUMBER + pointer_hasher(p.second) * SIMPLE_NUMBER * SIMPLE_NUMBER;
         }
 
-        // trim from right
-        inline std::string& rtrim(std::string& s, const char* t = " \t\n\r\f\v")
+        size_t operator()(const domain::Stop* p) const
         {
-            s.erase(s.find_last_not_of(t) + 1);
-            return s;
+            return pointer_hasher(p) * SIMPLE_NUMBER;
         }
 
-        // trim from left & right
-        inline std::string& trim(std::string& s, const char* t = " \t\n\r\f\v")
-        {
-            return ltrim(rtrim(s, t), t);
-        }
+    private:
+        std::hash<const void*> pointer_hasher{};
+    };
 
-        // copying versions
-        inline std::string ltrim_copy(std::string s, const char* t = " \t\n\r\f\v")
-        {
-            return ltrim(s, t);
-        }
+    // trim from left
+    inline std::string& ltrim(std::string& s, const char* t = " \t\n\r\f\v")
+    {
+        s.erase(0, s.find_first_not_of(t));
+        return s;
+    }
 
-        inline std::string rtrim_copy(std::string s, const char* t = " \t\n\r\f\v")
-        {
-            return rtrim(s, t);
-        }
+    // trim from right
+    inline std::string& rtrim(std::string& s, const char* t = " \t\n\r\f\v")
+    {
+        s.erase(s.find_last_not_of(t) + 1);
+        return s;
+    }
 
-        inline std::string trim_copy(std::string s, const char* t = " \t\n\r\f\v")
-        {
-            return trim(s, t);
-        }
-    }    // namespace detail
-}    // namespace transport_catalogue
+    // trim from left & right
+    inline std::string& trim(std::string& s, const char* t = " \t\n\r\f\v")
+    {
+        return ltrim(rtrim(s, t), t);
+    }
+
+    // copying versions
+    inline std::string ltrim_copy(std::string s, const char* t = " \t\n\r\f\v")
+    {
+        return ltrim(s, t);
+    }
+
+    inline std::string rtrim_copy(std::string s, const char* t = " \t\n\r\f\v")
+    {
+        return rtrim(s, t);
+    }
+
+    inline std::string trim_copy(std::string s, const char* t = " \t\n\r\f\v")
+    {
+        return trim(s, t);
+    }
+}    // namespace detail

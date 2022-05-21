@@ -25,13 +25,13 @@ namespace output
             Query(QueryType type, const std::string& request) : type_(type), request_(request) {}
         };
 
-        std::deque<Query> request_data_{};
+        std::deque<Query>                        request_data_{};
         transport_catalogue::TransportCatalogue* catalogue_ = nullptr;
 
     private:
         void        ParseCatalogue();
-        std::string PrintBus(const transport_catalogue::BusInfo& bus);
-        std::string PrintStop(const transport_catalogue::StopInfo& bus);
+        std::string PrintBus(const domain::BusInfo& bus);
+        std::string PrintStop(const domain::StopInfo& bus);
 
     public:
         explicit Reader(transport_catalogue::TransportCatalogue* catalogue);
