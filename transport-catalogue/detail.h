@@ -1,30 +1,10 @@
 #pragma once
 
-#include "domain.h"
-
 #include <string>
 #include <utility>
 
 namespace detail
 {
-    const int SIMPLE_NUMBER = 37;
-
-    struct StopPtrHasher
-    {
-        size_t operator()(const std::pair<const domain::Stop*, const domain::Stop*>& p) const
-        {
-            return pointer_hasher(p.first) * SIMPLE_NUMBER + pointer_hasher(p.second) * SIMPLE_NUMBER * SIMPLE_NUMBER;
-        }
-
-        size_t operator()(const domain::Stop* p) const
-        {
-            return pointer_hasher(p) * SIMPLE_NUMBER;
-        }
-
-    private:
-        std::hash<const void*> pointer_hasher{};
-    };
-
     // trim from left
     inline std::string& ltrim(std::string& s, const char* t = " \t\n\r\f\v")
     {

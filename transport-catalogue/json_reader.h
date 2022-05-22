@@ -16,20 +16,25 @@ namespace json
         template<typename Stream>
         void Serialize(Stream& stream);
 
-        template<typename InStream, typename OutStream>
-        void Deserialize(InStream& input, OutStream& output);
+        template<typename Stream>
+        void Deserialize(Stream& output);
 
     private:
         void        FillCatalogue();
         json::Array ReadCatalogue();
 
-        bool IsStop(const json::Node& node);
+        bool IsStop(const json::Node& node) const;
         void ParseStops(const json::Array& data);
-
-        bool IsRoute(const json::Node& node);
+        bool IsRoute(const json::Node& node) const;
         void ParseRoutes(const json::Array& data);
-
         void ParseDistances(const json::Array& data);
+
+        bool IsRouteRequest(const json::Node& node) const;
+        Dict ParseRouteAnswer(const json::Dict& request) const;
+        bool IsStopRequest(const json::Node& node) const;
+        Dict ParseStopAnswer(const json::Dict& request) const;
+
+        Dict ErrorMessage(int id) const;
 
     private:
         json::Document     json_data_;
@@ -43,8 +48,8 @@ namespace json
         FillCatalogue();
     }
 
-    template<typename InStream, typename OutStream>
-    void Reader::Deserialize(InStream& input, OutStream& output)
+    template<typename Stream>
+    void Reader::Deserialize(Stream& output)
     {
         const auto& answers = ReadCatalogue();
         json::Print(json::Document(json::Node{answers}), output);

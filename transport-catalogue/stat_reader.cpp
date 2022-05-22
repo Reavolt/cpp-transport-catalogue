@@ -26,7 +26,7 @@ namespace output
     std::string Reader::PrintStop(const domain::StopInfo& stop)
     {
         std::stringstream stream;
-        if(!stop.not_found_)
+        if(stop.found_)
         {
             if(stop.buses_name_.size())
             {

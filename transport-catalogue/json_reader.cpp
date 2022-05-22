@@ -1,6 +1,7 @@
 #include "json_reader.h"
 
 #include "domain.h"
+#include "json.h"
 
 namespace json
 {
@@ -22,7 +23,7 @@ namespace json
         }
     }
 
-    bool Reader::IsStop(const json::Node& node)
+    bool Reader::IsStop(const json::Node& node) const
     {
         if(!node.IsMap())
         {
@@ -67,7 +68,7 @@ namespace json
         }
     }
 
-    bool Reader::IsRoute(const json::Node& node)
+    bool Reader::IsRoute(const json::Node& node) const
     {
         if(!node.IsMap())
         {
@@ -99,9 +100,19 @@ namespace json
         {
             if(IsRoute(value))
             {
-                const auto& name = value.AsMap().at("name"s).AsString();
-                // const auto  is_roundtrip = value.AsMap().at("is_roundtrip"s).AsBool();
-                const auto stops = value.AsMap().at("stops"s).AsArray();
+                const auto& name         = value.AsMap().at("name"s).AsString();
+                const auto  is_roundtrip = value.AsMap().at("is_roundtrip"s).AsBool();
+                const auto  stops        = value.AsMap().at("stops"s).AsArray();
+
+                domain::RouteType route_type;
+                if(!is_roundtrip)
+                {
+                    route_type = domain::RouteType::CIRCLE;
+                }
+                else
+                {
+                    route_type = domain::RouteType::LINEAR;
+                }
 
                 std::vector<const domain::Stop*> stops_names;
                 for(const auto& stop_name : stops)
@@ -111,7 +122,7 @@ namespace json
                         stops_names.push_back(catalogue_->FindStop(stop_name.AsString()));
                     }
                 }
-                catalogue_->AddBus({name, stops_names});
+                catalogue_->AddBus({name, stops_names, route_type});
             }
         }
     }
@@ -136,41 +147,131 @@ namespace json
         }
     }
 
-    json::Array Reader::ParseAnswer(const json::Array& requests) const
+    bool Reader::IsRouteRequest(const json::Node& node) const
     {
-        json::Array result;
-        for(const auto& request : requests)
+        if(!node.IsMap())
         {
-            if(IsRouteRequest(request))
-            {
-                result.push_back(LoadRouteAnswer(request.AsMap()));
-            }
-            else if(IsStopRequest(request))
-            {
-                result.push_back(LoadStopAnswer(request.AsMap()));
-            }
-            else if(IsMapRequest(request))
-            {
-                result.push_back(LoadMapAnswer(request.AsMap()));
-            }
-            else if(IsRouteBuildRequest(request))
-            {
-                result.push_back(LoadRouteBuildAnswer(request.AsMap(), catalogue, router));
-            }
+            return false;
         }
-        return result;
+        const auto& request = node.AsMap();
+        if(request.count("type"s) == 0 || request.at("type"s) != "Bus"s)
+        {
+            return false;
+        }
+        if(request.count("id"s) == 0 || !(request.at("id"s).IsInt()))
+        {
+            return false;
+        }
+        if(request.count("name"s) == 0 || !(request.at("name"s).IsString()))
+        {
+            return false;
+        }
+        return true;
+    }
+
+    json::Dict Reader::ParseRouteAnswer(const json::Dict& request) const
+    {
+        int         id   = request.at("id"s).AsInt();
+        const auto& name = request.at("name"s).AsString();
+
+        auto answer = catalogue_->GetBusInfo(name);
+        if(answer.found_)
+        {
+            auto map                 = json::Dict();
+            map["request_id"]        = id;
+            map["curvature"]         = answer.curvature_;
+            map["route_length"]      = answer.bus_length_;
+            map["stop_count"]        = static_cast<int>(answer.stops_count_);
+            map["unique_stop_count"] = static_cast<int>(answer.uniq_stops_count_);
+            return map;
+        }
+        return ErrorMessage(id);
+    }
+
+    bool Reader::IsStopRequest(const json::Node& node) const
+    {
+        if(!node.IsMap())
+        {
+            return false;
+        }
+        const auto& request = node.AsMap();
+        if(request.count("type"s) == 0 || request.at("type"s) != "Stop"s)
+        {
+            return false;
+        }
+        if(request.count("id"s) == 0 || !(request.at("id"s).IsInt()))
+        {
+            return false;
+        }
+        if(request.count("name"s) == 0 || !(request.at("name"s).IsString()))
+        {
+            return false;
+        }
+        return true;
+    }
+
+    json::Dict Reader::ParseStopAnswer(const json::Dict& request) const
+    {
+        int         id   = request.at("id"s).AsInt();
+        const auto& name = request.at("name"s).AsString();
+
+        auto answer = catalogue_->GetStopInfo(name);
+
+        json::Array buses;
+        if(answer.found_)
+        {
+            for(const auto& bus_name : answer.buses_name_)
+            {
+                buses.push_back(bus_name);
+            }
+            auto map          = json::Dict();
+            map["request_id"] = id;
+            map["buses"]      = buses;
+            return map;
+        }
+        return ErrorMessage(id);
     }
 
     json::Array Reader::ReadCatalogue()
     {
+        json::Array result;
+
         if(json_data_.GetRoot().IsMap() && json_data_.GetRoot().AsMap().count("stat_requests"s) > 0)
         {
             const auto& requests = json_data_.GetRoot().AsMap().at("stat_requests"s);
 
             if(requests.IsArray())
             {
-                return ParseAnswer(requests.AsArray());
+                for(const auto& request : requests.AsArray())
+                {
+                    if(IsRouteRequest(request))
+                    {
+                        result.push_back(ParseRouteAnswer(request.AsMap()));
+                    }
+                    if(IsStopRequest(request))
+                    {
+                        result.push_back(ParseStopAnswer(request.AsMap()));
+                    }
+                    // if(IsMapRequest(request))
+                    // {
+                    //     result.push_back(LoadMapAnswer(request.AsMap()));
+                    // }
+                    // if(IsRouteBuildRequest(request))
+                    // {
+                    //     result.push_back(LoadRouteBuildAnswer(request.AsMap(), catalogue, router));
+                    // }
+                }
+                return result;
             }
         }
+        return result;
+    }
+
+    json::Dict Reader::ErrorMessage(int id) const
+    {
+        auto map             = json::Dict();
+        map["request_id"]    = id;
+        map["error_message"] = "not found"s;
+        return map;
     }
 }    // namespace json

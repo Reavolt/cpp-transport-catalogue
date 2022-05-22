@@ -18,7 +18,13 @@ namespace transport_catalogue
 
     void TransportCatalogue::AddBus(const domain::Bus& bus_data)
     {
-        auto* bus                   = &buses_.emplace_back(bus_data);
+        auto* bus = &buses_.emplace_back(bus_data);
+
+        if(bus->route_type_ == domain::RouteType::CIRCLE)
+        {
+            bus->stops_.reserve(bus->stops_.size() * 2);
+            std::copy(bus->stops_.rbegin() + 1, bus->stops_.rend(), std::back_inserter(bus->stops_));
+        }
         busname_to_bus_[bus->name_] = bus;
 
         for(size_t i = 0; i < bus->stops_.size(); ++i)
@@ -68,7 +74,7 @@ namespace transport_catalogue
             double route_distance = GetRouteDistance(Bus->stops_);
             return {Bus->name_, Bus->stops_.size(), GetUniqStopsCount(Bus->stops_), route_length, route_length / route_distance};
         }
-        return {std::string(bus_name), 0, 0, 0, 0.0};
+        return {std::string(bus_name), 0, 0, 0, 0.0, false};
     }
 
     domain::StopInfo TransportCatalogue::GetStopInfo(const std::string_view stop_name) const
@@ -95,7 +101,7 @@ namespace transport_catalogue
             }
             return stop_info;
         }
-        stop_info.not_found_ = true;
+        stop_info.found_ = false;
         return stop_info;
     }
 
@@ -127,7 +133,7 @@ namespace transport_catalogue
                                      [](const domain::Stop* lhs, const domain::Stop* rhs)
                                      {
                                          return geo::ComputeDistance({lhs->coordinates_.lat, lhs->coordinates_.lng},
-                                                                {rhs->coordinates_.lat, rhs->coordinates_.lng});
+                                                                     {rhs->coordinates_.lat, rhs->coordinates_.lng});
                                      }    // map-операция
         );
     }

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "detail.h"
 #include "domain.h"
 #include "geo.h"
 
@@ -15,8 +14,8 @@ namespace transport_catalogue
 {
     class TransportCatalogue
     {
-        using StopNameToBus = std::unordered_map<const domain::Stop*, std::unordered_set<domain::Bus*>, detail::StopPtrHasher>;
-        using StopsToDistance = std::unordered_map<std::pair<domain::Stop*, domain::Stop*>, int, detail::StopPtrHasher>;
+        using StopNameToBus = std::unordered_map<const domain::Stop*, std::unordered_set<domain::Bus*>, domain::StopPtrHasher>;
+        using StopsToDistance = std::unordered_map<std::pair<domain::Stop*, domain::Stop*>, int, domain::StopPtrHasher>;
         using StopnameToStop  = std::unordered_map<std::string_view, domain::Stop*>;
         using BusnameToBus    = std::unordered_map<std::string_view, domain::Bus*>;
 

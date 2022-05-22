@@ -121,14 +121,13 @@ namespace input
         std::stringstream                str_stream(request);
         std::vector<const domain::Stop*> ring_route;
 
-        ring_route.reserve(std::count_if(request.begin(), request.end(), [&](char c) { return c == '-'; }) * 2);
+        ring_route.reserve(std::count_if(request.begin(), request.end(), [&](char c) { return c == '-'; }) + 1);
 
         std::string Stop;
         while(std::getline(str_stream, Stop, '-'))
         {
             ring_route.push_back(catalogue_->FindStop(detail::trim(Stop)));
         }
-        std::copy(ring_route.rbegin() + 1, ring_route.rend(), std::back_inserter(ring_route));
         return ring_route;
     }
 
@@ -145,11 +144,9 @@ namespace input
         if(request.find('>') != std::string::npos)
         {
             route = ParseStandartRoute(request);
+            return {name, route, domain::RouteType::LINEAR};
         }
-        else
-        {
-            route = ParseRingRoute(request);
-        }
-        return {name, route};
+        route = ParseRingRoute(request);
+        return {name, route, domain::RouteType::CIRCLE};
     }
 }    // namespace input

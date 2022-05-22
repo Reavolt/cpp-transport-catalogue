@@ -1,6 +1,7 @@
 #pragma once
 
 #include "transport_catalogue.h"
+#include "detail.h"
 
 #include <iostream>
 #include <queue>
