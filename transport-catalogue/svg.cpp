@@ -216,15 +216,6 @@ namespace svg
 
     // ---------- Document ------------------
 
-    Document::Document() :
-        document_objects_(),
-        xml_version_("1.0"),
-        encoding_("UTF-8"),
-        xmlns("http://www.w3.org/2000/svg"),
-        xmlns_version_("1.1")
-    {
-    }
-
     void Document::AddPtr(std::unique_ptr<Object>&& object)
     {
         document_objects_.emplace_back(std::move(object));
@@ -232,8 +223,8 @@ namespace svg
 
     void Document::Render(std::ostream& out) const
     {
-        out << "<?xml version=\""sv << xml_version_ << "\" encoding=\"" << encoding_ << "\" ?>\n";
-        out << "<svg xmlns=\""sv << xmlns << "\" version=\"" << xmlns_version_ << "\">\n";
+        out << "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"sv << std::endl;
+        out << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">"sv << std::endl;
         for(const auto& object : document_objects_)
         {
             out << " ";

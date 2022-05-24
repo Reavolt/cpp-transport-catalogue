@@ -1,6 +1,5 @@
-#include "input_reader.h"
-#include "stat_reader.h"
 #include "json_reader.h"
+#include "map_renderer.h"
 #include "transport_catalogue.h"
 
 #include <iostream>
@@ -12,9 +11,15 @@ int main()
 
     json::Reader test(&test_catalogue);
     test.Serialize(std::cin);
-    test.Deserialize(std::cout);
 
-    // transport_catalogue::TransportCatalogue catalogue;
+    renderer::MapRenderer renderer;
+    renderer.SetRoutes(test_catalogue.GetBuses());
+    renderer.SetStops(test_catalogue.GetStops());
+    renderer.SetStopNameToBus(test_catalogue.GetStopNameToBus());
+    renderer.SetSettings(test.ParseRenderSettings().value());
+    renderer.RenderMap().Render(std::cout);
+
+    // test.Deserialize(std::cout);
 
     // input::Reader in_reader(&catalogue);
     // in_reader.ReadFromStream(std::cin);

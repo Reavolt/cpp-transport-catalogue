@@ -11,6 +11,16 @@ namespace transport_catalogue
         stopname_to_stop_[stop->name_] = stop;
     }
 
+    const TransportCatalogue::StopnameToStop* TransportCatalogue::GetStops() const
+    {
+        return &stopname_to_stop_;
+    }
+
+    const TransportCatalogue::StopNameToBus* TransportCatalogue::GetStopNameToBus() const
+    {
+        return &stopname_to_bus_;
+    }
+
     domain::Stop* TransportCatalogue::FindStop(const std::string_view name) const
     {
         return stopname_to_stop_.count(name) ? stopname_to_stop_.at(name) : nullptr;
@@ -31,6 +41,11 @@ namespace transport_catalogue
         {
             stopname_to_bus_[bus->stops_[i]].insert(bus);
         }
+    }
+
+    const TransportCatalogue::BusnameToBus* TransportCatalogue::GetBuses() const
+    {
+        return &busname_to_bus_;
     }
 
     domain::Bus* TransportCatalogue::FindBus(const std::string_view name) const

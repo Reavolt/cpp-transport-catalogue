@@ -102,7 +102,6 @@ namespace svg
     };
 
     template<typename Owner>
-    // NOLINTNEXTLINE
     class PathProps
     {
     public:
@@ -181,7 +180,6 @@ namespace svg
         std::optional<StrokeLineJoin> stroke_line_join_;
     };
 
-    // NOLINTNEXTLINE
     class Object
     {
     public:
@@ -192,7 +190,6 @@ namespace svg
         virtual void RenderObject(const RenderContext& context) const = 0;
     };
 
-    // NOLINTNEXTLINE
     class Circle final : public Object, public PathProps<Circle>
     {
     public:
@@ -256,7 +253,6 @@ namespace svg
         };
     };
 
-    // NOLINTNEXTLINE
     class ObjectContainer
     {
     public:
@@ -269,7 +265,6 @@ namespace svg
         virtual ~ObjectContainer()                         = default;
     };
 
-    // NOLINTNEXTLINE
     class Drawable
     {
     public:
@@ -282,15 +277,10 @@ namespace svg
     {
     private:
         std::vector<std::unique_ptr<Object>> document_objects_;
-        std::string                          xml_version_;
-        std::string                          encoding_;
-        std::string                          xmlns;
-        std::string                          xmlns_version_;
 
     public:
-        Document();
+        // Document();
         void AddPtr(std::unique_ptr<Object>&& obj) override;
         void Render(std::ostream& out) const;
-        ~Document() override = default;
     };
 }    // namespace svg

@@ -31,9 +31,14 @@ namespace transport_catalogue
 
     public:    //methods
         void                        AddStop(const domain::Stop& stop_data);
+        const StopnameToStop*       GetStops() const;
         [[nodiscard]] domain::Stop* FindStop(const std::string_view name) const;
-        void                        AddBus(const domain::Bus& bus_data);
-        [[nodiscard]] domain::Bus*  FindBus(const std::string_view name) const;
+
+        void                       AddBus(const domain::Bus& bus_data);
+        const BusnameToBus*        GetBuses() const;
+        [[nodiscard]] domain::Bus* FindBus(const std::string_view name) const;
+
+        const StopNameToBus* GetStopNameToBus() const;
 
         void SetDistanceBetweenStops(const std::string_view from_stop, const std::string_view to_stop, const int distance);
         [[nodiscard]] int GetDistanceBetweenStops(const std::string_view from_stop, const std::string_view to_stop) const;
