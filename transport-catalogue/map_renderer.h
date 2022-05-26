@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <map>
+#include <set>
 
 #pragma once
 
@@ -109,21 +110,43 @@ namespace renderer
         using StopNameToBus = std::unordered_map<const domain::Stop*, std::unordered_set<domain::Bus*>, domain::StopPtrHasher>;
 
     private:
-        RenderSettings settings_;
-        const Stops*   stops_;
-        const Buses*   buses_;
-        const StopNameToBus*   stopname_to_bus_;
+        RenderSettings       settings_;
+        const Stops*         stops_;
+        const Buses*         buses_;
+        const StopNameToBus* stopname_to_bus_;
+
+        struct LexSort
+        {
+            template <typename Type>
+            bool operator()(const Type* lhs, const Type* rhs) const
+            {
+                return std::lexicographical_compare(lhs->name_.begin(), lhs->name_.end(), rhs->name_.begin(), rhs->name_.end());
+            }
+        };
 
     public:
         MapRenderer();
-        void          SetSettings(const RenderSettings& settings_);
-        void          SetStops(const Stops* stops);
-        void          SetRoutes(const Buses* routes);
-        void          SetStopNameToBus(const StopNameToBus* stopname_to_bus);
+
+        void SetSettings(const RenderSettings& settings_);
+        void SetStops(const Stops* stops);
+        void SetRoutes(const Buses* routes);
+        void SetStopNameToBus(const StopNameToBus* stopname_to_bus);
+
         svg::Document RenderMap();
 
     private:
-        void RenderLines(const renderer::SphereProjector& projector, svg::Document& document) const;
-    };
+        void RenderLines(const renderer::SphereProjector&             projector,
+                         svg::Document&                               document,
+                         const std::set<const domain::Bus*, LexSort>& buses_to_render) const;
 
+        void RenderRouteNames(const renderer::SphereProjector&             projector,
+                              svg::Document&                               document,
+                              const std::set<const domain::Bus*, LexSort>& buses_to_render) const;
+
+        void RenderStopsPoint(const renderer::SphereProjector& projector, svg::Document& document,
+                              const std::set<const domain::Stop*, LexSort>& stops_to_render) const;
+
+        void RenderStopNames(const renderer::SphereProjector& projector, svg::Document& document,
+                              const std::set<const domain::Stop*, LexSort>& stops_to_render) const;
+    };
 }    // namespace renderer

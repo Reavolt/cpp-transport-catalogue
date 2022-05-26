@@ -106,8 +106,8 @@ namespace json
                 const auto  is_roundtrip = value.AsMap().at("is_roundtrip"s).AsBool();
                 const auto  stops        = value.AsMap().at("stops"s).AsArray();
 
-                domain::RouteType route_type;
-                if(!is_roundtrip)
+                domain::RouteType route_type = domain::RouteType::NONE;
+                if(is_roundtrip)
                 {
                     route_type = domain::RouteType::CIRCLE;
                 }
@@ -280,8 +280,6 @@ namespace json
     renderer::RenderSettings Reader::ParseSettings(const json::Dict& json_data)
     {
         renderer::RenderSettings result;
-
-        // считываем все нужные параметры при их наличии
         if(json_data.count("width"s) != 0 && json_data.at("width"s).IsDouble())
         {
             result.width_ = json_data.at("width"s).AsDouble();
@@ -338,7 +336,6 @@ namespace json
 
     std::optional<renderer::RenderSettings> Reader::ParseRenderSettings()
     {
-        // загружаем параметры рендеринга, если они есть
         if(json_data_.GetRoot().IsMap() && json_data_.GetRoot().AsMap().count("render_settings"s) > 0)
         {
             auto& render_settings = json_data_.GetRoot().AsMap().at("render_settings"s);
@@ -351,7 +348,7 @@ namespace json
         return std::nullopt;
     }
 
-    bool Reader::IsMapRequest(const json::Node& node) const
+    bool Reader::IsMapRequest(const json::Node& node)
     {
         if(!node.IsMap())
         {
@@ -369,16 +366,16 @@ namespace json
         return true;
     }
 
-    json::Dict Reader::ParseMapAnswer(const json::Dict& request, const renderer::RenderSettings& render_settings) const
+    json::Dict Reader::ParseMapAnswer(const json::Dict& request)
     {
-        int id = request.at("id"s).AsInt();
-        std::cout << "test" << std::endl;
-        std::ostringstream    out;
-        renderer::MapRenderer renderer;
+        int                id = request.at("id").AsInt();
+        std::ostringstream out;
 
-        renderer.SetSettings(render_settings);
-        renderer.SetStops(catalogue_->GetStops());
+        renderer::MapRenderer renderer;
         renderer.SetRoutes(catalogue_->GetBuses());
+        renderer.SetStops(catalogue_->GetStops());
+        renderer.SetStopNameToBus(catalogue_->GetStopNameToBus());
+        renderer.SetSettings(ParseRenderSettings().value());
         renderer.RenderMap().Render(out);
 
         auto map          = json::Dict();
@@ -409,14 +406,9 @@ namespace json
                     }
                     if(IsMapRequest(request))
                     {
-                        result.push_back(ParseMapAnswer(request.AsMap(), render_settings_));
+                        result.push_back(ParseMapAnswer(request.AsMap()));
                     }
-                    // if(IsRouteBuildRequest(request))
-                    // {
-                    //     result.push_back(LoadRouteBuildAnswer(request.AsMap(), catalogue, router));
-                    // }
                 }
-                return result;
             }
         }
         return result;

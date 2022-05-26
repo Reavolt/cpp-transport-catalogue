@@ -47,8 +47,9 @@ namespace transport_catalogue
         [[nodiscard]] domain::StopInfo GetStopInfo(const std::string_view bus_name) const;
 
     private:    //methods
-        [[nodiscard]] size_t GetUniqStopsCount(const std::vector<const domain::Stop*> bus_stops) const;
-        [[nodiscard]] int    GetRouteLength(const std::vector<const domain::Stop*> bus_stops) const;
-        [[nodiscard]] double GetRouteDistance(const std::vector<const domain::Stop*> bus_stops) const;
+        [[nodiscard]] size_t GetStopCount(const domain::Bus* bus_data) const;
+        [[nodiscard]] size_t GetUniqStopsCount(const domain::Bus* bus_data) const;
+        [[nodiscard]] int    GetRouteLength(const domain::Bus* bus_data) const;
+        [[nodiscard]] double GetRouteDistance(const domain::Bus* bus_data) const;
     };
 }    // namespace transport_catalogue

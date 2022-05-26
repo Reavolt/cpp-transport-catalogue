@@ -36,18 +36,19 @@ namespace json
         Dict ParseRouteAnswer(const json::Dict& request) const;
         bool IsStopRequest(const json::Node& node) const;
         Dict ParseStopAnswer(const json::Dict& request) const;
-        bool IsMapRequest(const json::Node& node) const;
-        Dict ParseMapAnswer(const json::Dict& request, const renderer::RenderSettings& render_settings) const;
 
         svg::Color               ReadColor(const json::Node& color) const;
         svg::Point               ReadOffset(const json::Array& offset) const;
         renderer::RenderSettings ParseSettings(const json::Dict& data);
 
+        bool IsMapRequest(const json::Node& node);
+        Dict ParseMapAnswer(const json::Dict& request);
+
         Dict ErrorMessage(int id) const;
 
     private:
         json::Document           json_data_;
-        TransportCatalogue       catalogue_ = nullptr;
+        TransportCatalogue       catalogue_;
         renderer::RenderSettings render_settings_;
     };
 

@@ -11,15 +11,7 @@ int main()
 
     json::Reader test(&test_catalogue);
     test.Serialize(std::cin);
-
-    renderer::MapRenderer renderer;
-    renderer.SetRoutes(test_catalogue.GetBuses());
-    renderer.SetStops(test_catalogue.GetStops());
-    renderer.SetStopNameToBus(test_catalogue.GetStopNameToBus());
-    renderer.SetSettings(test.ParseRenderSettings().value());
-    renderer.RenderMap().Render(std::cout);
-
-    // test.Deserialize(std::cout);
+    test.Deserialize(std::cout);
 
     // input::Reader in_reader(&catalogue);
     // in_reader.ReadFromStream(std::cin);

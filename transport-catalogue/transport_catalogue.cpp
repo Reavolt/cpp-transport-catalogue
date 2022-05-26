@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <stdexcept>
 
 namespace transport_catalogue
 {
@@ -28,13 +29,15 @@ namespace transport_catalogue
 
     void TransportCatalogue::AddBus(const domain::Bus& bus_data)
     {
-        auto* bus = &buses_.emplace_back(bus_data);
-
-        if(bus->route_type_ == domain::RouteType::CIRCLE)
+        if(bus_data.route_type_ == domain::RouteType::CIRCLE)
         {
-            bus->stops_.reserve(bus->stops_.size() * 2);
-            std::copy(bus->stops_.rbegin() + 1, bus->stops_.rend(), std::back_inserter(bus->stops_));
+            if(bus_data.stops_.front() != bus_data.stops_.back())
+            {
+                throw std::invalid_argument("In circle route first and last stops must be equal!");
+            }
         }
+
+        auto* bus                   = &buses_.emplace_back(bus_data);
         busname_to_bus_[bus->name_] = bus;
 
         for(size_t i = 0; i < bus->stops_.size(); ++i)
@@ -82,21 +85,28 @@ namespace transport_catalogue
 
     domain::BusInfo TransportCatalogue::GetBusInfo(const std::string_view bus_name) const
     {
-        if(busname_to_bus_.count(bus_name))
+        domain::BusInfo bus_info;
+        const auto*     bus = FindBus(bus_name);
+
+        if(bus != nullptr)
         {
-            auto&  Bus            = busname_to_bus_.at(bus_name);
-            int    route_length   = GetRouteLength(Bus->stops_);
-            double route_distance = GetRouteDistance(Bus->stops_);
-            return {Bus->name_, Bus->stops_.size(), GetUniqStopsCount(Bus->stops_), route_length, route_length / route_distance};
+            bus_info.name_             = bus->name_;
+            bus_info.stops_count_      = GetStopCount(bus);
+            bus_info.uniq_stops_count_ = GetUniqStopsCount(bus);
+            bus_info.bus_length_       = GetRouteLength(bus);
+            bus_info.curvature_        = bus_info.bus_length_ / GetRouteDistance(bus);
+            return bus_info;
         }
-        return {std::string(bus_name), 0, 0, 0, 0.0, false};
+        bus_info.found_ = false;
+        return bus_info;
     }
 
     domain::StopInfo TransportCatalogue::GetStopInfo(const std::string_view stop_name) const
     {
-        auto* Stop = FindStop(stop_name);
 
         domain::StopInfo stop_info;
+        auto* Stop = FindStop(stop_name);
+        
         stop_info.name_ = stop_name;
 
         if(Stop != nullptr)
@@ -108,48 +118,53 @@ namespace transport_catalogue
 
                 for(const auto* Bus : buses)
                 {
-                    stop_info.name_ = stop_name;
                     stop_info.buses_name_.push_back(Bus->name_);
                 }
                 std::sort(stop_info.buses_name_.begin(), stop_info.buses_name_.end());
                 return stop_info;
             }
-            return stop_info;
         }
         stop_info.found_ = false;
         return stop_info;
     }
 
-    size_t TransportCatalogue::GetUniqStopsCount(const std::vector<const domain::Stop*> bus_stops) const
+    size_t TransportCatalogue::GetStopCount(const domain::Bus* bus_data) const
     {
-        std::unordered_set<const domain::Stop*> unique_stops{bus_stops.begin(), bus_stops.end()};
+        int result = static_cast<int>(bus_data->stops_.size());
+        return bus_data->route_type_ == domain::RouteType::LINEAR ? result = result * 2 - 1 : result;
+    }
+
+    size_t TransportCatalogue::GetUniqStopsCount(const domain::Bus* bus_data) const
+    {
+        std::unordered_set<const domain::Stop*> unique_stops{bus_data->stops_.begin(), bus_data->stops_.end()};
         return unique_stops.size();
     }
 
-    int TransportCatalogue::GetRouteLength(const std::vector<const domain::Stop*> bus_stops) const
+    int TransportCatalogue::GetRouteLength(const domain::Bus* bus_data) const
     {
-        return std::transform_reduce(std::next(bus_stops.begin()),
-                                     bus_stops.end(),
-                                     bus_stops.begin(),    // входной диапазон
-                                     0,                    // начальное значение
-                                     std::plus<>{},    // reduce-операция (группирующая функция)
-                                     [this](const domain::Stop* lhs, const domain::Stop* rhs)
-                                     { return GetDistanceBetweenStops(rhs->name_, lhs->name_); }    // map-операция
-        );
+        int result = 0;
+        for(auto iter1 = bus_data->stops_.begin(), iter2 = iter1 + 1; iter2 < bus_data->stops_.end(); ++iter1, ++iter2)
+        {
+            result += GetDistanceBetweenStops((*iter1)->name_, (*iter2)->name_);
+        }
+
+        if(bus_data->route_type_ == domain::RouteType::LINEAR)
+        {
+            for(auto iter1 = bus_data->stops_.rbegin(), iter2 = iter1 + 1; iter2 < bus_data->stops_.rend(); ++iter1, ++iter2)
+            {
+                result += GetDistanceBetweenStops((*iter1)->name_, (*iter2)->name_);
+            }
+        }
+        return result;
     }
 
-    double TransportCatalogue::GetRouteDistance(const std::vector<const domain::Stop*> bus_stops) const
+    double TransportCatalogue::GetRouteDistance(const domain::Bus* bus_data) const
     {
-        return std::transform_reduce(std::next(bus_stops.begin()),
-                                     bus_stops.end(),
-                                     bus_stops.begin(),    // входной диапазон
-                                     0.0,                  // начальное значение
-                                     std::plus<>{},    // reduce-операция (группирующая функция)
-                                     [](const domain::Stop* lhs, const domain::Stop* rhs)
-                                     {
-                                         return geo::ComputeDistance({lhs->coordinates_.lat, lhs->coordinates_.lng},
-                                                                     {rhs->coordinates_.lat, rhs->coordinates_.lng});
-                                     }    // map-операция
-        );
+        double result = 0.0;
+        for(auto iter1 = bus_data->stops_.begin(), iter2 = iter1 + 1; iter2 < bus_data->stops_.end(); ++iter1, ++iter2)
+        {
+            result += ComputeDistance((*iter1)->coordinates_, (*iter2)->coordinates_);
+        }
+        return bus_data->route_type_ == domain::RouteType::LINEAR ? result *= 2 : result;
     }
 }    // namespace transport_catalogue
