@@ -199,7 +199,9 @@ namespace svg
     void Text::RenderObject(const RenderContext& context) const
     {
         auto& out = context.out;
-        out << "<text x=\""sv << position_.x << "\" y=\""sv << position_.y << "\""sv;
+        out << "<text"sv;
+        RenderAttrs(out);
+        out << " x=\"" << position_.x << "\" y=\""sv << position_.y << "\""sv;
         out << " dx=\""sv << offset_.x << "\" dy=\""sv << offset_.y << "\""sv;
         out << " font-size=\""sv << size_ << "\""sv;
         if(!font_family_.empty())
@@ -210,7 +212,6 @@ namespace svg
         {
             out << " font-weight=\""sv << font_weight_ << "\""sv;
         }
-        RenderAttrs(out);
         out << ">" << data_ << "</text>";
     }
 
@@ -227,7 +228,7 @@ namespace svg
         out << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">"sv << std::endl;
         for(const auto& object : document_objects_)
         {
-            out << " ";
+            out << "  ";
             object->Render(out);
         }
         out << "</svg>";

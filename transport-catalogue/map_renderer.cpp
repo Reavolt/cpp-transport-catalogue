@@ -172,10 +172,8 @@ namespace renderer
     {
         for(const auto& stop : stops_to_render)
         {
-            // проходим по всем остановкам, которые входят в какой либо маршрут
             if(stopname_to_bus_->count(stop) && !stopname_to_bus_->at(stop).empty())
             {
-                // формируем текст и подложку
                 svg::Text text;
                 text.SetData(std::string(stop->name_));
                 text.SetPosition(projector(stop->coordinates_));

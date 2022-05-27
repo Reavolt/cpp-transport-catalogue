@@ -103,12 +103,10 @@ namespace transport_catalogue
 
     domain::StopInfo TransportCatalogue::GetStopInfo(const std::string_view stop_name) const
     {
-
         domain::StopInfo stop_info;
-        auto* Stop = FindStop(stop_name);
-        
-        stop_info.name_ = stop_name;
+        auto*            Stop = FindStop(stop_name);
 
+        stop_info.name_ = stop_name;
         if(Stop != nullptr)
         {
             if(stopname_to_bus_.count(Stop))
@@ -123,6 +121,8 @@ namespace transport_catalogue
                 std::sort(stop_info.buses_name_.begin(), stop_info.buses_name_.end());
                 return stop_info;
             }
+            stop_info.found_ = true;
+            return stop_info;
         }
         stop_info.found_ = false;
         return stop_info;

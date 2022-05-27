@@ -219,14 +219,14 @@ namespace json
 
         auto answer = catalogue_->GetStopInfo(name);
 
-        json::Array buses;
         if(answer.found_)
         {
+            json::Array buses;
+            auto        map = json::Dict();
             for(const auto& bus_name : answer.buses_name_)
             {
                 buses.push_back(bus_name);
             }
-            auto map          = json::Dict();
             map["request_id"] = id;
             map["buses"]      = buses;
             return map;

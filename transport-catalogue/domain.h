@@ -39,7 +39,7 @@ namespace domain
         std::string name_{};
         size_t      stops_count_      = 0;
         size_t      uniq_stops_count_ = 0;
-        int         bus_length_       = 0;
+        double      bus_length_       = 0;
         double      curvature_        = 0.0;
         bool        found_            = true;
     };
