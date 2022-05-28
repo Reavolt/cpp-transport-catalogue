@@ -12,16 +12,8 @@ namespace geo
         double lat;
         double lng;
 
-        bool operator==(const Coordinates& other) const
-        {
-            return lat == other.lat && lng == other.lng;
-        }
-
-        bool operator!=(const Coordinates& other) const
-        {
-            return !(*this == other);
-        }
+        bool operator==(const Coordinates& other) const;
+        bool operator!=(const Coordinates& other) const;
     };
-
     double ComputeDistance(Coordinates from, Coordinates to);
 }    // namespace geo

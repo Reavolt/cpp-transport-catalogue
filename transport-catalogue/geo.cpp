@@ -14,4 +14,14 @@ namespace geo
                          std::cos(from.lat * dr) * std::cos(to.lat * dr) * std::cos(std::abs(from.lng - to.lng) * dr)) *
                EarthRadius;
     }
+
+    bool Coordinates::operator==(const Coordinates& other) const
+    {
+        return lat == other.lat && lng == other.lng;
+    }
+
+    bool Coordinates::operator!=(const Coordinates& other) const
+    {
+        return !(*this == other);
+    }
 }    // namespace geo

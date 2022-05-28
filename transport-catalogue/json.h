@@ -8,20 +8,11 @@
 
 namespace json
 {
-    /*
- * Вспомогательная структура, хранящая контекст для вывода с отступами.
- * Хранит ссылку на поток вывода и шаг отступа при выводе элемента
- */
     struct RenderContext
     {
-        explicit RenderContext(std::ostream& out, int indent = 0) : out(out), indent(indent) {}
-        void RenderIndent() const
-        {
-            for(int i = 0; i < indent; ++i)
-            {
-                out.put(' ');
-            }
-        }
+        explicit RenderContext(std::ostream& out, int indent);
+        void RenderIndent() const;
+
         std::ostream& out;
         int           indent = 0;
     };
@@ -30,7 +21,6 @@ namespace json
     using Dict  = std::map<std::string, Node>;
     using Array = std::vector<Node>;
 
-    // Эта ошибка должна выбрасываться при ошибках парсинга JSON
     class ParsingError : public std::runtime_error
     {
     public:
@@ -60,14 +50,8 @@ namespace json
         double             AsDouble() const;
         const std::string& AsString() const;
 
-        friend bool operator==(const Node& lhs, const Node& rhs)
-        {
-            return static_cast<NodeData>(lhs) == static_cast<NodeData>(rhs);
-        }
-        friend bool operator!=(const Node& lhs, const Node& rhs)
-        {
-            return !(lhs == rhs);
-        }
+        friend bool operator==(const Node& lhs, const Node& rhs);
+        friend bool operator!=(const Node& lhs, const Node& rhs);
     };
 
     class Document final
@@ -75,14 +59,6 @@ namespace json
     public:
         explicit Document(Node root);
         const Node& GetRoot() const;
-        friend bool operator==(const Document& lhs, const Document& rhs)
-        {
-            return lhs.root_ == rhs.root_;
-        }
-        friend bool operator!=(const Document& lhs, const Document& rhs)
-        {
-            return !(lhs == rhs);
-        }
 
     private:
         Node root_;

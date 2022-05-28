@@ -12,11 +12,4 @@ int main()
     json::Reader test(&test_catalogue);
     test.Serialize(std::cin);
     test.Deserialize(std::cout);
-
-    // input::Reader in_reader(&catalogue);
-    // in_reader.ReadFromStream(std::cin);
-
-    // output::Reader out_reader(&catalogue);
-    // out_reader.ReadFromStream(std::cin);
-    // out_reader.WriteToStream(std::cout);
 }

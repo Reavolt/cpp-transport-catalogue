@@ -10,4 +10,14 @@ namespace domain
         route_type_(route_type_)
     {
     }
+
+    size_t StopPtrHasher::operator()(const std::pair<const domain::Stop*, const domain::Stop*>& p) const
+    {
+        return pointer_hasher(p.first) * SIMPLE_NUMBER + pointer_hasher(p.second) * SIMPLE_NUMBER * SIMPLE_NUMBER;
+    }
+
+    size_t StopPtrHasher::operator()(const domain::Stop* p) const
+    {
+        return pointer_hasher(p) * SIMPLE_NUMBER;
+    }
 }    // namespace domain

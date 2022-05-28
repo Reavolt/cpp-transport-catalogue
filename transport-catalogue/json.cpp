@@ -4,6 +4,16 @@ using namespace std;
 
 namespace json
 {
+    RenderContext::RenderContext(std::ostream& out, int indent = 0) : out(out), indent(indent) {}
+
+    void RenderContext::RenderIndent() const
+    {
+        for(int i = 0; i < indent; ++i)
+        {
+            out.put(' ');
+        }
+    }
+
     namespace
     {
         // --------- вспомогательные функции для парсинга нод ---------------
@@ -11,7 +21,6 @@ namespace json
         std::string ParseString(std::istream& input)
         {
             std::string line;
-            // считываем поток посимвольно, до конца строки либо до неэкранированного "
             char c = ' ';
             while(input.get(c))
             {
@@ -49,7 +58,7 @@ namespace json
                     line += c;
                 }
             }
-            // если последний знак был не ", значит строка составлена некорректно
+
             if(c != '\"')
             {
                 throw ParsingError("Failed to parse string node : "s + line);
@@ -64,7 +73,6 @@ namespace json
 
             std::string parsed_num;
 
-            // Считывает в parsed_num очередной символ из input
             auto read_char = [&parsed_num, &input]
             {
                 parsed_num += static_cast<char>(input.get());
@@ -74,7 +82,6 @@ namespace json
                 }
             };
 
-            // Считывает одну или более цифр в parsed_num из input
             auto read_digits = [&input, read_char]
             {
                 if(!std::isdigit(input.peek()))
@@ -91,11 +98,10 @@ namespace json
             {
                 read_char();
             }
-            // Парсим целую часть числа
+
             if(input.peek() == '0')
             {
                 read_char();
-                // После 0 в JSON не могут идти другие цифры
             }
             else
             {
@@ -103,7 +109,7 @@ namespace json
             }
 
             bool is_int = true;
-            // Парсим дробную часть числа
+
             if(input.peek() == '.')
             {
                 read_char();
@@ -111,7 +117,6 @@ namespace json
                 is_int = false;
             }
 
-            // Парсим экспоненциальную часть числа
             if(int ch = input.peek(); ch == 'e' || ch == 'E')
             {
                 read_char();
@@ -166,7 +171,6 @@ namespace json
                 }
                 result.push_back(LoadNode(input));
             }
-            // проверяем, что массив заканчивается на ]
             if(c != ']')
             {
                 throw ParsingError("Failed to parse array node");
@@ -180,7 +184,6 @@ namespace json
             char c = ' ';
             input >> c;
 
-            // проверяем, если словарь пустой
             if(c == '}')
             {
                 return Node(Dict{});
@@ -189,10 +192,10 @@ namespace json
 
             while(input >> c)
             {
-                // считываем ключ
                 input.putback(c);
                 string key;
                 auto   first_node = LoadNode(input);
+
                 if(first_node.IsString())
                 {
                     key = first_node.AsString();
@@ -202,17 +205,14 @@ namespace json
                     throw ParsingError("Failed to parse dict key");
                 }
 
-                // считываем разделитель
                 input >> c;
                 if(c != ':')
                 {
                     throw ParsingError("Failed to parse dict node");
                 }
 
-                // считываем значение и записываем в словарь
                 result.insert({move(key), LoadNode(input)});
 
-                // считываем следующий символ (должен быть либо "}" либо ","
                 input >> c;
                 if(c == '}')
                 {
@@ -224,7 +224,6 @@ namespace json
                 }
             }
 
-            // проверяем, что если поток закончился, то последний символ был }
             if(c != '}')
             {
                 throw ParsingError("Failed to parse dict node");
@@ -264,10 +263,7 @@ namespace json
         Node LoadBool(istream& input)
         {
             std::string res;
-            char        c = ' ';
-
-            //определяю сколько символов считывать
-            c          = static_cast<char>(input.peek());
+            char        c = static_cast<char>(input.peek());
             int length = c == 't' ? 4 : 5;
 
             for(int i = 0; i < length; ++i)
@@ -432,6 +428,16 @@ namespace json
         throw std::logic_error("Node data is not string"s);
     }
 
+    bool operator==(const Node& lhs, const Node& rhs)
+    {
+        return static_cast<NodeData>(lhs) == static_cast<NodeData>(rhs);
+    }
+
+    bool operator!=(const Node& lhs, const Node& rhs)
+    {
+        return !(lhs == rhs);
+    }
+
     // ------------------------------------------------------------------
 
     Document::Document(Node root) : root_(move(root)) {}
@@ -441,10 +447,11 @@ namespace json
         return root_;
     }
 
+    // ------------------------------------------------------------------
+
     Document Load(istream& input)
     {
         Document result{LoadNode(input)};
-        // проверить что после считывания в потоке не осталось лишних символов
         if(char c = ' '; input >> c)
         {
             throw ParsingError("Failed to parse document"s);

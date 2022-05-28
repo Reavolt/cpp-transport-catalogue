@@ -1,0 +1,11 @@
+Checks: '
+//-ENABLE-//,
+-*,
+google-*,
+cppcoreguidelines-*,
+clang-*,
+llvm-*, 
+
+//-DISABLE-//,
+-cppcoreguidelines-owning-memory,
+-cppcoreguidelines-avoid-magic-numbers'

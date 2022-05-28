@@ -55,15 +55,8 @@ namespace domain
 
     struct StopPtrHasher
     {
-        size_t operator()(const std::pair<const domain::Stop*, const domain::Stop*>& p) const
-        {
-            return pointer_hasher(p.first) * SIMPLE_NUMBER + pointer_hasher(p.second) * SIMPLE_NUMBER * SIMPLE_NUMBER;
-        }
-
-        size_t operator()(const domain::Stop* p) const
-        {
-            return pointer_hasher(p) * SIMPLE_NUMBER;
-        }
+        size_t operator()(const std::pair<const domain::Stop*, const domain::Stop*>& p) const;
+        size_t operator()(const domain::Stop* p) const;
 
     private:
         std::hash<const void*> pointer_hasher{};
