@@ -13,6 +13,7 @@ add_executable(${PROJECT_NAME}
     transport_catalogue.cpp
     json_reader.cpp
     map_renderer.cpp
+    json_builder.cpp
 )
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG")
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)

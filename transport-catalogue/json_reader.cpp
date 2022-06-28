@@ -2,6 +2,7 @@
 
 #include "domain.h"
 #include "json.h"
+#include "json_builder.h"
 
 #include <sstream>
 
@@ -179,13 +180,21 @@ namespace json
         auto answer = catalogue_->GetBusInfo(name);
         if(answer.found_)
         {
-            auto map                 = json::Dict();
-            map["request_id"]        = id;
-            map["curvature"]         = answer.curvature_;
-            map["route_length"]      = answer.bus_length_;
-            map["stop_count"]        = static_cast<int>(answer.stops_count_);
-            map["unique_stop_count"] = static_cast<int>(answer.uniq_stops_count_);
-            return map;
+            return json::Builder{}
+              .StartDict()
+              .Key("request_id")
+              .Value(id)
+              .Key("curvature")
+              .Value(answer.curvature_)
+              .Key("route_length")
+              .Value(answer.bus_length_)
+              .Key("stop_count")
+              .Value(static_cast<int>(answer.stops_count_))
+              .Key("unique_stop_count")
+              .Value(static_cast<int>(answer.uniq_stops_count_))
+              .EndDict()
+              .Build()
+              .AsMap();
         }
         return ErrorMessage(id);
     }
@@ -222,14 +231,11 @@ namespace json
         if(answer.found_)
         {
             json::Array buses;
-            auto        map = json::Dict();
             for(const auto& bus_name : answer.buses_name_)
             {
                 buses.push_back(bus_name);
             }
-            map["request_id"] = id;
-            map["buses"]      = buses;
-            return map;
+            return json::Builder{}.StartDict().Key("request_id"s).Value(id).Key("buses"s).Value(buses).EndDict().Build().AsMap();
         }
         return ErrorMessage(id);
     }
@@ -378,10 +384,7 @@ namespace json
         renderer.SetSettings(ParseRenderSettings().value());
         renderer.RenderMap().Render(out);
 
-        auto map          = json::Dict();
-        map["request_id"] = id;
-        map["map"]        = out.str();
-        return map;
+        return json::Builder{}.StartDict().Key("request_id"s).Value(id).Key("map"s).Value(out.str()).EndDict().Build().AsMap();
     }
 
     json::Array Reader::ReadCatalogue()
@@ -416,9 +419,14 @@ namespace json
 
     json::Dict Reader::ErrorMessage(int id) const
     {
-        auto map             = json::Dict();
-        map["request_id"]    = id;
-        map["error_message"] = "not found"s;
-        return map;
+        return json::Builder{}
+          .StartDict()
+          .Key("request_id"s)
+          .Value(id)
+          .Key("error_message"s)
+          .Value("not found"s)
+          .EndDict()
+          .Build()
+          .AsMap();
     }
 }    // namespace json

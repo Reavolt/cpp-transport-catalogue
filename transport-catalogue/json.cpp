@@ -21,7 +21,7 @@ namespace json
         std::string ParseString(std::istream& input)
         {
             std::string line;
-            char c = ' ';
+            char        c = ' ';
             while(input.get(c))
             {
                 if(c == '\\')
@@ -263,8 +263,8 @@ namespace json
         Node LoadBool(istream& input)
         {
             std::string res;
-            char        c = static_cast<char>(input.peek());
-            int length = c == 't' ? 4 : 5;
+            char        c      = static_cast<char>(input.peek());
+            int         length = c == 't' ? 4 : 5;
 
             for(int i = 0; i < length; ++i)
             {
