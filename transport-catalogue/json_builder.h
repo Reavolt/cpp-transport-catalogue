@@ -1,94 +1,85 @@
-#pragma once
-
 #include "json.h"
 
-#include <string>
-#include <variant>
-#include <vector>
+namespace json {
+    class ItemContext;
+    class KeyItemContext;
+    class ValueContext;
+    class DictItemContext;
+    class ArrayItemContext;
 
-namespace json
-{
-    class Builder final
-    {
-        class ItemContext;
-        class KeyItemContext;
-        class KeyValueItemContext;
-        class DictItemContext;
-        class ArrayItemContext;
-
+    class Builder {
     public:
-        Builder() = default;
-
-        const Node& Build() const;
-
+        Builder();
         KeyItemContext Key(std::string key);
-        Builder&       Value(NodeData value);
-
+        Builder& Value(Node value);
         DictItemContext StartDict();
-        Builder&        EndDict();
-
         ArrayItemContext StartArray();
-        Builder&         EndArray();
+        Builder& EndDict();
+        Builder& EndArray();
+        Node Build();
 
     private:
-        Node               root_;
+        Node root_;
         std::vector<Node*> nodes_stack_;
-        bool               is_empty_ = true;
-        bool               has_key_  = false;
-        std::string        key_;
-        void               AddRef(const Node& value);
+
+        template <typename T>
+        void InputResult(T elem) {
+            if (nodes_stack_.back()->IsArray()) {
+                const_cast<Array&>(nodes_stack_.back()->AsArray()).push_back(elem);
+                nodes_stack_.emplace_back(&const_cast<Array&>(nodes_stack_.back()->AsArray()).back());
+            }
+            else {
+                *nodes_stack_.back() = elem;
+            }
+        }
     };
 
-    // ---- Вспомогательные классы для проверки корректности времени компиляции ----
-
-    class Builder::ItemContext
-    {
+    class ItemContext {
     public:
-        ItemContext(Builder& builder) : builder_{builder} {}
-
-    protected:
-        KeyItemContext   Key(std::string key);
-        DictItemContext  StartDict();
-        Builder&         EndDict();
+        ItemContext(Builder& builder) :builder_(builder) {};
+        KeyItemContext Key(std::string key);
+        Builder& Value(Node value);
+        DictItemContext StartDict();
         ArrayItemContext StartArray();
-        Builder&         EndArray();
-
+        Builder& EndDict();
+        Builder& EndArray();
+    private:
         Builder& builder_;
     };
 
-    class Builder::KeyValueItemContext final : public ItemContext
-    {
+    class KeyItemContext :public ItemContext {
     public:
-        using ItemContext::EndDict;
-        using ItemContext::ItemContext;
-        using ItemContext::Key;
+        KeyItemContext(Builder& builder) :ItemContext(builder) {};
+        KeyItemContext Key(std::string key) = delete;
+        ValueContext Value(Node value);
+        Builder& EndDict() = delete;
+        Builder& EndArray() = delete;
     };
 
-    class Builder::KeyItemContext final : public ItemContext
-    {
+    class ValueContext :public ItemContext {
     public:
-        using ItemContext::ItemContext;
-        KeyValueItemContext Value(NodeData value);
-        using ItemContext::StartArray;
-        using ItemContext::StartDict;
+        ValueContext(Builder& builder) :ItemContext(builder) {};
+        Builder& Value(Node value) = delete;
+        DictItemContext StartDict() = delete;
+        ArrayItemContext StartArray() = delete;
+        Builder& EndArray() = delete;
     };
 
-    class Builder::DictItemContext final : public ItemContext
-    {
+    class DictItemContext :public ItemContext {
     public:
-        using ItemContext::EndDict;
-        using ItemContext::ItemContext;
-        using ItemContext::Key;
+        DictItemContext(Builder& builder) :ItemContext(builder) {};
+        Builder& Value(Node value) = delete;
+        DictItemContext StartDict() = delete;
+        ArrayItemContext StartArray() = delete;
+        Builder& EndArray() = delete;
     };
 
-    class Builder::ArrayItemContext final : public ItemContext
-    {
+    class ArrayItemContext :public ItemContext {
     public:
-        using ItemContext::ItemContext;
-        ArrayItemContext Value(NodeData value);
-        using ItemContext::EndArray;
-        using ItemContext::StartArray;
-        using ItemContext::StartDict;
+        ArrayItemContext(Builder& builder) :ItemContext(builder) {};
+        KeyItemContext Key(std::string key) = delete;
+        ArrayItemContext Value(Node value) { return ItemContext::Value(std::move(value)); }
+        Builder& EndDict() = delete;
     };
 
-}    // namespace json
+}//namespace json

@@ -1,64 +1,44 @@
 #pragma once
-#include "geo.h"
 
-#include <optional>
-#include <string>
+/*
+ * В этом файле вы можете разместить классы/структуры, которые являются частью предметной области (domain)
+ * вашего приложения и не зависят от транспортного справочника. Например Автобусные маршруты и Остановки.
+ *
+ * Их можно было бы разместить и в transport_catalogue.h, однако вынесение их в отдельный
+ * заголовочный файл может оказаться полезным, когда дело дойдёт до визуализации карты маршрутов:
+ * визуализатор карты (map_renderer) можно будет сделать независящим от транспортного справочника.
+ *
+ * Если структура вашего приложения не позволяет так сделать, просто оставьте этот файл пустым.
+ *
+ */
+
 #include <string_view>
 #include <vector>
+#include <string>
+#include <set>
+#include "geo.h"
 
-namespace domain
-{
-    enum class RouteType
-    {
-        NONE,
-        CIRCLE,
-        LINEAR
-    };
-
+namespace domain {
     struct Stop
     {
-        std::string      name_{};
-        geo::Coordinates coordinates_{};
+    public:
+        size_t edge_id;
+        geo::Coordinates coords;
+        std::string name;
 
-        Stop() = default;
-        Stop(const std::string& name, const geo::Coordinates& coordinates);
+        explicit Stop(size_t id, geo::Coordinates coordinates, std::string name)
+            : edge_id(id)
+            , coords(coordinates)
+            , name(name) {
+        }
     };
 
     struct Bus
     {
-        std::string              name_{};
-        std::vector<const Stop*> stops_{};
-        RouteType                route_type_{};
+        std::string bus_number;
+        std::vector<Stop*> stops = {};
+        bool is_roundtrip = false;
 
-        Bus() = default;
-        Bus(const std::string& name, const std::vector<const Stop*>& stops, RouteType route_type_);
     };
 
-    struct BusInfo
-    {
-        std::string name_{};
-        size_t      stops_count_      = 0;
-        size_t      uniq_stops_count_ = 0;
-        double      bus_length_       = 0;
-        double      curvature_        = 0.0;
-        bool        found_            = true;
-    };
-
-    struct StopInfo
-    {
-        std::string              name_{};
-        std::vector<std::string> buses_name_{};
-        bool                     found_ = true;
-    };
-
-    const int SIMPLE_NUMBER = 37;
-
-    struct StopPtrHasher
-    {
-        size_t operator()(const std::pair<const domain::Stop*, const domain::Stop*>& p) const;
-        size_t operator()(const domain::Stop* p) const;
-
-    private:
-        std::hash<const void*> pointer_hasher{};
-    };
-}    // namespace domain
+} // namespace domain

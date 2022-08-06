@@ -1,68 +1,41 @@
 #pragma once
 
-#include "domain.h"
-#include "json.h"
-#include "map_renderer.h"
 #include "transport_catalogue.h"
+#include "json_builder.h"
+#include "router.h"
+#include "transport_router.h"
+#include "router.h"
 
-namespace json
-{
-    class Reader
-    {
-        using TransportCatalogue = transport_catalogue::TransportCatalogue*;
+#include <iostream>
 
-    public:
-        explicit Reader(transport_catalogue::TransportCatalogue* catalogue);
+namespace json_pro {
+	class JSONreader {
+	private:
 
-        template<typename Stream>
-        void Serialize(Stream& stream);
+		transport_db::TransportCatalogue& t_c_;
+		std::string result_map_render_;
+		transport_router::TransportRouter& transport_router_;
+		json::Dict route_requests_;
+		json::Array stat_requests_;
+		json::Array stat_answer_;
 
-        std::optional<renderer::RenderSettings> ParseRenderSettings();
+	public:
+		explicit JSONreader(
+			transport_db::TransportCatalogue& t_c,
+			std::string result_map_render,
+			transport_router::TransportRouter& transport_router);
 
-        template<typename Stream>
-        void Deserialize(Stream& output);
+		void LoadJSON( std::istream& input);
 
-    private:
-        void        FillCatalogue();
-        json::Array ReadCatalogue();
+		void FillCatalogueStop( json::Document& doc);
+		void FillCatalogueBus( json::Document& doc);
+		void SetGraphInfo(const json::Dict& doc, transport_router::TransportRouter& router);
 
-        bool IsStop(const json::Node& node) const;
-        void ParseStops(const json::Array& data);
-        bool IsRoute(const json::Node& node) const;
-        void ParseRoutes(const json::Array& data);
-        void ParseDistances(const json::Array& data);
+		void PrintAnswer();
+		json::Dict PrintStop( const json::Node& node_map, int id);
+		json::Dict PrintBus( const json::Node& node_map, int id);
+		json::Dict PrintGraph( const json::Node& node_map, int id, graph::Router<double> transport_router, transport_router::TransportRouter router);
+		json::Dict PrintVisual(std::string result_map_render, int id);
+	};
+}
 
-        bool IsRouteRequest(const json::Node& node) const;
-        Dict ParseRouteAnswer(const json::Dict& request) const;
-        bool IsStopRequest(const json::Node& node) const;
-        Dict ParseStopAnswer(const json::Dict& request) const;
-
-        svg::Color               ReadColor(const json::Node& color) const;
-        svg::Point               ReadOffset(const json::Array& offset) const;
-        renderer::RenderSettings ParseSettings(const json::Dict& data);
-
-        bool IsMapRequest(const json::Node& node);
-        Dict ParseMapAnswer(const json::Dict& request);
-
-        Dict ErrorMessage(int id) const;
-
-    private:
-        json::Document           json_data_;
-        TransportCatalogue       catalogue_;
-        renderer::RenderSettings render_settings_;
-    };
-
-    template<typename Stream>
-    void Reader::Serialize(Stream& stream)
-    {
-        json_data_ = std::move(json::Load(stream));
-        FillCatalogue();
-    }
-
-    template<typename Stream>
-    void Reader::Deserialize(Stream& output)
-    {
-        const auto& answers = ReadCatalogue();
-        json::Print(json::Document(json::Node{answers}), output);
-    }
-}    // namespace json

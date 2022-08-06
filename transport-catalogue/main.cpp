@@ -1,22 +1,17 @@
-#include "json_reader.h"
-#include "map_renderer.h"
 #include "transport_catalogue.h"
-
+#include "json_reader.h"
 #include <iostream>
-#include <string_view>
 
-int main()
-{
-    transport_catalogue::TransportCatalogue test_catalogue;
+int main() {
 
-    json::Reader test(&test_catalogue);
-    test.Serialize(std::cin);
-    test.Deserialize(std::cout);
+    transport_db::TransportCatalogue catalogue;
+    transport_router::TransportRouter router;
+    std::string result_map_render;
 
-    // input::Reader in_reader(&catalogue);
-    // in_reader.ReadFromStream(std::cin);
+    json_pro::JSONreader json_reader(catalogue, result_map_render, router);
 
-    // output::Reader out_reader(&catalogue);
-    // out_reader.ReadFromStream(std::cin);
-    // out_reader.WriteToStream(std::cout);
+    json_reader.LoadJSON( std::cin);
+    json_reader.PrintAnswer();
+
 }
+
