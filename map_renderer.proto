@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package proto_map_renderer;
+
+message MapRen {
+    bytes     str_of_result_map_render = 1;
+}
